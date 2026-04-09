@@ -75,20 +75,19 @@ onlyBuiltDependencies:
 
 overrides:
   # ============================================================================
-  # PLATFORM SCOPE: Linux x64 only (Replit deployment target)
+  # PLATFORM SCOPE: Linux x64 (Replit) + Windows x64 (CI matrix)
   # ============================================================================
-  # This workspace targets Replit's Linux x64 environment exclusively.
-  # All non-Linux and non-x64 optional native binaries are excluded to:
-  #   (a) reduce install size and install time
-  #   (b) prevent binary resolution errors in CI
+  # Native optional binaries are excluded for all platforms EXCEPT:
+  #   - linux-x64-gnu / linux-x64 → Replit deployment target
+  #   - win32-x64-gnu / win32-x64 → GitHub Actions windows-latest CI runner
   #
-  # Windows and macOS developers: use WSL2 or a devcontainer — native installs
-  # on those platforms will fail because the required platform binaries are
-  # explicitly excluded here. This is intentional and documented.
+  # Non-x64 Windows (arm64, ia32) and all macOS/BSD/other platforms are excluded
+  # to keep install size minimal. macOS/arm developers: use Docker or
+  # devcontainer — builds are verified against Linux and Windows x64 only.
   #
-  # DO NOT remove these exclusions without updating deployment targets and CI.
+  # DO NOT remove win32-x64 entries — they are required for CI to pass on
+  # windows-latest. DO NOT add darwin/freebsd entries without updating CI.
   # ============================================================================
-  # replit uses linux-x64 only, we can exclude all other platforms
   "esbuild>@esbuild/darwin-arm64": "-"
   "esbuild>@esbuild/darwin-x64": "-"
   "esbuild>@esbuild/freebsd-arm64": "-"
@@ -108,7 +107,7 @@ overrides:
   "esbuild>@esbuild/sunos-x64": "-"
   "esbuild>@esbuild/win32-arm64": "-"
   "esbuild>@esbuild/win32-ia32": "-"
-  "esbuild>@esbuild/win32-x64": "-"
+  # win32-x64 intentionally NOT excluded — needed for CI windows-latest runner
   "esbuild>@esbuild/aix-ppc64": '-'
   "esbuild>@esbuild/android-arm": '-'
   "esbuild>@esbuild/android-arm64": '-'
@@ -123,7 +122,7 @@ overrides:
   "lightningcss>lightningcss-linux-arm64-musl": "-"
   "lightningcss>lightningcss-linux-x64-musl": "-"
   "lightningcss>lightningcss-win32-arm64-msvc": "-"
-  "lightningcss>lightningcss-win32-x64-msvc": "-"
+  # lightningcss win32-x64-msvc intentionally NOT excluded — needed for windows-latest CI
   "@tailwindcss/oxide>@tailwindcss/oxide-android-arm64": "-"
   "@tailwindcss/oxide>@tailwindcss/oxide-darwin-arm64": "-"
   "@tailwindcss/oxide>@tailwindcss/oxide-darwin-x64": "-"
@@ -132,7 +131,7 @@ overrides:
   "@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-gnu": "-"
   "@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-musl": "-"
   "@tailwindcss/oxide>@tailwindcss/oxide-win32-arm64-msvc": "-"
-  "@tailwindcss/oxide>@tailwindcss/oxide-win32-x64-msvc": "-"
+  # @tailwindcss/oxide win32-x64-msvc intentionally NOT excluded — needed for windows-latest CI
   "@tailwindcss/oxide>@tailwindcss/oxide-linux-x64-musl": "-"
   "rollup>@rollup/rollup-android-arm-eabi": "-"
   "rollup>@rollup/rollup-android-arm64": "-"
@@ -156,8 +155,7 @@ overrides:
   "rollup>@rollup/rollup-openharmony-arm64": "-"
   "rollup>@rollup/rollup-win32-arm64-msvc": "-"
   "rollup>@rollup/rollup-win32-ia32-msvc": "-"
-  "rollup>@rollup/rollup-win32-x64-gnu": "-"
-  "rollup>@rollup/rollup-win32-x64-msvc": "-"
+  # rollup win32-x64-gnu and win32-x64-msvc intentionally NOT excluded — needed for windows-latest CI
   "@expo/ngrok-bin>@expo/ngrok-bin-darwin-arm64": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-darwin-x64": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-freebsd-ia32": "-"

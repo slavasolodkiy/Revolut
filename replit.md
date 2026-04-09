@@ -157,15 +157,41 @@ API-level tests live in `artifacts/api-server/src/__tests__/`:
 - **Branching engine — sole trader** — 4 cases including skipping `company_docs`
 - **Terminal steps** — 3 edge cases (`review`, unknown stepId)
 
-Total: **23 tests**, all passing via `vitest`.
+Total: **30 tests**, all passing via `vitest`.
+
+Integrity guards enforce exact error codes:
+- `INVALID_STEP_ID` (400): stepId not in step catalogue
+- `STEP_OUT_OF_ORDER` (409): valid stepId but ≠ `session.currentStepId`; "review jump" asserts exact 409
+- `SESSION_COMPLETED` (409): no further steps accepted after session completes
+- Re-submit: submitting a stale (already-accepted) step after session advances returns 409
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every push/PR to `main`:
-1. Install dependencies (pnpm, lockfile-frozen)
+`.github/workflows/ci.yml` runs on every push/PR to `main` in a matrix across two platforms:
+
+| Matrix leg | Runner |
+|---|---|
+| build-and-test (ubuntu-latest) | Linux x64 |
+| build-and-test (windows-latest) | Windows x64 |
+
+Each leg:
+1. `pnpm install --frozen-lockfile`
 2. `pnpm run typecheck`
 3. `pnpm run build`
 4. `pnpm --filter @workspace/api-server run test`
+
+## Platform Support
+
+Verified CI targets:
+- **Linux x64** (`ubuntu-latest`) — primary Replit deployment target; all native binaries included in lockfile
+- **Windows x64** (`windows-latest`) — CI matrix; `@esbuild/win32-x64`, `@rollup/rollup-win32-x64-gnu`, `lightningcss-win32-x64-msvc`, `@tailwindcss/oxide-win32-x64-msvc` are included in the lockfile and will be downloaded by Windows runners
+
+Not supported / not CI-verified:
+- **macOS** (darwin-arm64, darwin-x64) — binaries excluded from lockfile to reduce size; use Docker or devcontainer
+- **Windows ARM64 / ia32** — excluded from lockfile
+- **Linux non-x64** (arm64, arm, etc.) — excluded from lockfile
+
+The `dev` script in `@workspace/api-server` uses `cross-env` for cross-platform `NODE_ENV` assignment (required on Windows cmd.exe).
 
 ## Research & Architecture Docs
 

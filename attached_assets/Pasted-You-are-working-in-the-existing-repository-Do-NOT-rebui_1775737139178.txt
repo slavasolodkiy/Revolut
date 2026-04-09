@@ -1,0 +1,62 @@
+You are working in the existing repository. Do NOT rebuild from scratch.
+
+Goal: Sprint 4 = make the repository truthful, reproducible, and CI-verifiable across environments.
+
+Hard constraints:
+1) Keep clean-room constraints.
+2) Make incremental commits with clear messages.
+3) Do not claim “done” unless files exist and commands pass.
+4) Final push to GitHub.
+
+Tasks:
+
+A) Restore real CI (currently missing)
+1. Create .github/workflows/ci.yml in repo root.
+2. Trigger on push + pull_request to main.
+3. Matrix build for:
+   - ubuntu-latest
+   - windows-latest
+4. Steps:
+   - checkout
+   - setup pnpm + node 24
+   - pnpm install --frozen-lockfile
+   - pnpm run typecheck
+   - pnpm run build
+   - pnpm --filter @workspace/api-server run test
+
+B) Fix cross-platform scripts
+1. Make api-server dev script work on Windows and Linux.
+   - Replace inline NODE_ENV assignments with a cross-platform approach.
+2. Ensure root scripts remain cross-platform (no sh/export dependency).
+
+C) Resolve Windows build/test failure (Rollup optional binary issue)
+1. Remove the exclusion that blocks required win32 rollup binary OR implement a reliable cross-platform alternative.
+2. Keep Linux/Replit behavior intact.
+3. Verify build+tests run on both OSes.
+
+D) Tighten onboarding contract tests
+1. In onboarding test suite, enforce exact status/code for out-of-order “review jump”:
+   - must assert 409 and STEP_OUT_OF_ORDER (not [400,409]).
+2. Add one API-level test proving:
+   - submitting current step succeeds,
+   - re-submitting same step after transition fails with STEP_OUT_OF_ORDER.
+
+E) Keep docs/status truthful
+1. Update replit.md and STATUS.md to reflect actual repo state:
+   - CI only if file exists.
+   - Build/test claims must match real behavior across the documented environments.
+2. If any platform limitations remain, document them explicitly in replit.md in a dedicated “Platform Support” section.
+
+Acceptance criteria:
+1. `.github/workflows/ci.yml` exists and is valid.
+2. `pnpm run typecheck` passes locally.
+3. `pnpm run build` passes locally on Windows and in Linux CI.
+4. `pnpm --filter @workspace/api-server run test` passes locally on Windows and in Linux CI.
+5. onboarding out-of-order test asserts exact 409 + STEP_OUT_OF_ORDER.
+6. replit.md and STATUS.md contain no false claims.
+
+Final response format:
+1) Changed files
+2) What was fixed by sections A–E
+3) Exact command results (local + CI run summary)
+4) Remaining gaps (if any)

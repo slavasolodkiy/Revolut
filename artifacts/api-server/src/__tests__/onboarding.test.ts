@@ -191,15 +191,15 @@ describe("onboarding integrity — INVALID_STEP_ID", () => {
     expect(res.body.message).toContain("totally_made_up_step");
   });
 
-  it("submitting 'review' when not there yet → 400 INVALID_STEP_ID is not the error; should be STEP_OUT_OF_ORDER", async () => {
-    // review IS a valid step, so it passes INVALID_STEP_ID but fails STEP_OUT_OF_ORDER
+  it("jumping to 'review' before reaching it → exact 409 STEP_OUT_OF_ORDER", async () => {
+    // "review" is a valid step (not caught by INVALID_STEP_ID) but session is at
+    // "address_country", so it must be rejected as STEP_OUT_OF_ORDER, not 400.
     const res = await request(app)
       .post("/api/onboarding/session/session-111/step")
       .set("Authorization", "Bearer tok-user1")
       .send({ stepId: "review", answer: null });
-    // Must NOT be 200 — skipping to the end is forbidden
-    expect(res.status).not.toBe(200);
-    expect([400, 409]).toContain(res.status);
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe("STEP_OUT_OF_ORDER");
   });
 });
 
@@ -223,6 +223,31 @@ describe("onboarding integrity — STEP_OUT_OF_ORDER", () => {
       .set("Authorization", "Bearer tok-user1")
       .send({ stepId: "address_country", answer: "GB" });
     expect(res.status).toBe(200);
+  });
+
+  it("re-submitting a step after transition → 409 STEP_OUT_OF_ORDER", async () => {
+    // Round 1: submit the current step — must succeed
+    const res1 = await request(app)
+      .post("/api/onboarding/session/session-111/step")
+      .set("Authorization", "Bearer tok-user1")
+      .send({ stepId: "address_country", answer: "GB" });
+    expect(res1.status).toBe(200);
+
+    // Advance mock session state as the DB would after accepting the step
+    sessionState = {
+      ...sessionState,
+      currentStepId: "employment_status",
+      completedSteps: ["address_country"],
+    };
+
+    // Round 2: re-submit the stale step — must be rejected because the session
+    // has advanced; the client must always use the step the server sends back
+    const res2 = await request(app)
+      .post("/api/onboarding/session/session-111/step")
+      .set("Authorization", "Bearer tok-user1")
+      .send({ stepId: "address_country", answer: "GB" });
+    expect(res2.status).toBe(409);
+    expect(res2.body.error).toBe("STEP_OUT_OF_ORDER");
   });
 });
 
