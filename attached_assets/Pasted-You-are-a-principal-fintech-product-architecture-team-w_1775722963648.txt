@@ -1,0 +1,78 @@
+You are a principal fintech product+architecture team working in clean-room mode.
+
+Goal:
+Build a Revolut-inspired reference platform (NOT a 1:1 clone), and produce deep research + implementable codebase.
+Focus on:
+1) revolut.com + discovered country/business variants
+2) iOS app: https://apps.apple.com/us/app/revolut-send-spend-and-save/id932493382
+3) Android app: https://play.google.com/store/apps/details?id=com.revolut.revolut&hl=en_GB
+
+Hard constraints:
+1) Use only public/legal sources and black-box observation.
+2) Do not copy proprietary code/assets/brand/trademarks.
+3) Every factual claim must include source links and confidence (High/Med/Low).
+4) Separate “observed facts” from “inferred architecture”.
+
+Deliverables in GitHub monorepo:
+1) /research
+- competitor_scope.md
+- source_index.md (all links)
+- web_app_feature_matrix.csv
+- onboarding_matrix.csv
+- countries_languages_docs_matrix.csv
+- external_api_integrations.md
+2) /architecture
+- system-context.md
+- container-diagram.md
+- microservices-catalog.md
+- api-gateway-and-middleware.md
+- frontend-architecture.md
+- backend-architecture.md
+- risks-and-assumptions.md
+3) /product
+- web app (consumer + business entry flows)
+- mobile app skeleton (shared feature parity map)
+- backend microservices (auth, profile, onboarding, kyc-orchestrator, accounts, cards, payments, fx, notifications)
+- API gateway + service-to-service auth
+- sample integrations stubs (KYC vendor, payments rail, email/SMS, analytics)
+4) /ops
+- docker-compose for local run
+- env.example
+- seed data
+- CI pipeline
+- README with runbook
+
+Onboarding deep decomposition (must be exhaustive and branch-based):
+1) Personal vs Business onboarding.
+2) For each step capture:
+- question_id, screen_name, question_text
+- answer options
+- validation rules
+- branching logic (if answer X -> next step Y)
+- required docs (passport/ID/residence/company docs)
+- country/region constraints
+- language availability
+- error/edge states
+3) Output as decision tree + tabular matrix.
+4) Mark unknowns explicitly; do not invent facts.
+
+External APIs / ID / SSO / onboarding integrations:
+1) Find and document publicly available official APIs.
+2) Explicitly state where APIs are not public or unclear.
+3) Include auth model (OAuth2/OpenID/etc), scopes, onboarding relevance, and limits.
+
+Execution plan:
+1) Phase A: Research only + docs.
+2) Phase B: Architecture proposal from research.
+3) Phase C: Implementation of a legal clean-room MVP with parity-focused flows.
+4) Phase D: Push all to GitHub and open initial PR.
+
+Git workflow:
+1) Initialize monorepo.
+2) Commit after each phase with clear messages.
+3) Push continuously to GitHub.
+4) Add STATUS.md with:
+- done
+- in progress
+- blocked
+- next actions

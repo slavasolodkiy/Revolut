@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: novapay_dev
+      POSTGRES_USER: novapay
+      POSTGRES_PASSWORD: novapay_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./seed:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U novapay -d novapay_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-server:
+    build:
+      context: ..
+      dockerfile: ops/Dockerfile.api
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      DATABASE_URL: postgresql://novapay:novapay_dev_password@postgres:5432/novapay_dev
+      SESSION_SECRET: dev_session_secret_change_in_production
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ..:/workspace
+      - /workspace/node_modules
+
+  web:
+    build:
+      context: ..
+      dockerfile: ops/Dockerfile.web
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      BASE_PATH: /
+      VITE_API_BASE_URL: http://api-server:8080/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-server
+
+volumes:
+  postgres_data:

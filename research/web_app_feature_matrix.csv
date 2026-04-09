@@ -1,0 +1,59 @@
+feature_area,feature_name,personal,business,available_countries,confidence,notes
+Accounts,Multi-currency accounts,yes,yes,Global,High,36+ currencies observed
+Accounts,GBP current account,yes,yes,GB,High,Sort code + account number
+Accounts,EUR IBAN account,yes,yes,EU/EEA,High,SEPA-compliant IBAN
+Accounts,USD account,yes,yes,US+,High,
+Accounts,Savings vaults,yes,no,Most markets,High,Interest-bearing in some markets
+Accounts,Crypto account,yes,partial,Select markets,High,Regulatory limitations per country
+Cards,Virtual card (Visa/MC),yes,yes,Global,High,Instant issuance
+Cards,Physical card (Visa/MC),yes,yes,Global,High,Delivery 3-5 days
+Cards,Metal card,Premium+,no,Global,High,Premium/Metal tiers only
+Cards,Freeze/unfreeze,yes,yes,Global,High,
+Cards,Spending limits,yes,yes,Global,High,
+Cards,Single-use virtual cards,Premium+,no,Select,Med,
+Payments,P2P (Revolut user),yes,partial,Global,High,Phone/username/link
+Payments,UK Faster Payments,yes,yes,GB,High,Instant
+Payments,SEPA Instant,yes,yes,EU/EEA,High,
+Payments,SEPA Credit Transfer,yes,yes,EU/EEA,High,
+Payments,SWIFT international,yes,yes,Global,High,Fees apply
+Payments,Scheduled payments,yes,yes,Global,High,
+Payments,Recurring payments,yes,yes,Global,Med,
+Payments,Payment links,no,yes,Global,Med,Business only
+Payments,Bulk payments,no,yes,Global,High,Business only
+FX,Real-time FX rates,yes,yes,Global,High,
+FX,Currency conversion,yes,yes,Global,High,Spread applies on weekends/Standard
+FX,FX limits (free),yes,yes,Global,High,Standard: GBP 1000/month fee-free
+FX,Rate alerts,Premium+,no,Global,Med,
+FX,Crypto exchange,yes,no,Select markets,High,
+KYC,Photo ID verification,yes,yes,Global,High,Passport/National ID/DL
+KYC,Liveness check,yes,yes,Global,High,Selfie + liveness detection
+KYC,Address verification,yes,yes,Global,High,Utility bill/bank statement
+KYC,Enhanced due diligence,yes,yes,Global,Med,For high-risk profiles
+KYC,Business verification,no,yes,Global,High,Company docs + UBO
+Analytics,Spending breakdown,yes,partial,Global,High,Category-based
+Analytics,Monthly summary,yes,yes,Global,High,
+Analytics,Budgeting,yes,no,Global,Med,
+Analytics,Subscription tracker,yes,no,Select,Med,
+Insurance,Travel insurance,Premium+,no,Select,High,
+Insurance,Medical insurance,Premium+,no,Select,High,
+Insurance,Phone insurance,Premium+,no,Select,High,
+Investments,Stock trading,yes,no,US + select EU,High,Commission-free
+Investments,ETF trading,yes,no,Select EU,Med,
+Investments,Crypto trading,yes,no,Select markets,High,
+Investments,Commodities,yes,no,Select markets,High,Gold/Silver
+Investments,Robo-advisor,Premium+,no,Select,Med,
+Lending,Personal loan,yes,no,Select markets,High,
+Lending,Overdraft,yes,no,Select markets,Med,
+Lending,BNPL,yes,no,Select markets,Low,
+Security,Two-factor auth,yes,yes,Global,High,
+Security,Biometric login,yes,yes,Global,High,
+Security,Login notification,yes,yes,Global,High,
+Security,Card PIN change in-app,yes,yes,Global,High,
+Security,Disposable virtual cards,Premium+,no,Select,Med,
+Business,Team cards,no,yes,Global,High,
+Business,Expense management,no,yes,Global,High,
+Business,Multi-user access,no,yes,Global,High,
+Business,Custom permissions,no,yes,Global,High,
+Business,API access,no,yes,Global,High,Merchant + Open Banking APIs
+Business,Invoicing,no,yes,Select,Med,
+Business,Payroll,no,yes,Select,Med,

@@ -3,20 +3,38 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Revolut-inspired reference fintech platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication and session management
+  - name: onboarding
+    description: Onboarding flow (personal and business)
+  - name: kyc
+    description: KYC verification orchestration
+  - name: accounts
+    description: Account management
+  - name: cards
+    description: Virtual and physical card management
+  - name: payments
+    description: Payments and transfers
+  - name: fx
+    description: Foreign exchange and currency conversion
+  - name: notifications
+    description: User notifications
+  - name: dashboard
+    description: Dashboard summary data
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +42,643 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Login with phone/email + passcode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logoutUser
+      tags: [auth]
+      summary: Logout current session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ONBOARDING
+  /onboarding/start:
+    post:
+      operationId: startOnboarding
+      tags: [onboarding]
+      summary: Start onboarding session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartOnboardingRequest"
+      responses:
+        "200":
+          description: Onboarding session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingSession"
+
+  /onboarding/session/{sessionId}:
+    get:
+      operationId: getOnboardingSession
+      tags: [onboarding]
+      summary: Get current onboarding session state
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Onboarding session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingSession"
+
+  /onboarding/session/{sessionId}/step:
+    post:
+      operationId: submitOnboardingStep
+      tags: [onboarding]
+      summary: Submit an onboarding step answer
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingStepSubmission"
+      responses:
+        "200":
+          description: Next step or completion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingSession"
+
+  /onboarding/steps:
+    get:
+      operationId: getOnboardingSteps
+      tags: [onboarding]
+      summary: Get full onboarding step tree (for rendering)
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [personal, business]
+      responses:
+        "200":
+          description: Onboarding step definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OnboardingStep"
+
+  # KYC
+  /kyc/status:
+    get:
+      operationId: getKycStatus
+      tags: [kyc]
+      summary: Get KYC verification status for current user
+      responses:
+        "200":
+          description: KYC status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycStatus"
+
+  /kyc/submit:
+    post:
+      operationId: submitKycDocument
+      tags: [kyc]
+      summary: Submit a KYC document for verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KycDocumentSubmission"
+      responses:
+        "202":
+          description: Document submitted for review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycStatus"
+
+  /kyc/checks:
+    get:
+      operationId: listKycChecks
+      tags: [kyc]
+      summary: List all KYC checks for current user
+      responses:
+        "200":
+          description: KYC checks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KycCheck"
+
+  # ACCOUNTS
+  /accounts:
+    get:
+      operationId: listAccounts
+      tags: [accounts]
+      summary: List all accounts for current user
+      responses:
+        "200":
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Account"
+    post:
+      operationId: createAccount
+      tags: [accounts]
+      summary: Create a new currency account/pocket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAccountRequest"
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+
+  /accounts/{accountId}:
+    get:
+      operationId: getAccount
+      tags: [accounts]
+      summary: Get account details
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+
+  /accounts/{accountId}/transactions:
+    get:
+      operationId: getAccountTransactions
+      tags: [accounts]
+      summary: Get transactions for an account
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: currency
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transactions list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionPage"
+
+  # CARDS
+  /cards:
+    get:
+      operationId: listCards
+      tags: [cards]
+      summary: List all cards for current user
+      responses:
+        "200":
+          description: List of cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Card"
+    post:
+      operationId: issueCard
+      tags: [cards]
+      summary: Issue a new virtual or physical card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueCardRequest"
+      responses:
+        "201":
+          description: Card issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+
+  /cards/{cardId}:
+    get:
+      operationId: getCard
+      tags: [cards]
+      summary: Get card details
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Card details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+    patch:
+      operationId: updateCard
+      tags: [cards]
+      summary: Freeze/unfreeze or update card settings
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCardRequest"
+      responses:
+        "200":
+          description: Updated card
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+
+  # PAYMENTS
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: List payments/transfers
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, completed, failed, cancelled]
+      responses:
+        "200":
+          description: Payments list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentPage"
+    post:
+      operationId: initiatePayment
+      tags: [payments]
+      summary: Initiate a payment or transfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InitiatePaymentRequest"
+      responses:
+        "202":
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/{paymentId}:
+    get:
+      operationId: getPayment
+      tags: [payments]
+      summary: Get payment details
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payment details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  # FX
+  /fx/rates:
+    get:
+      operationId: getFxRates
+      tags: [fx]
+      summary: Get live exchange rates
+      parameters:
+        - name: base
+          in: query
+          required: true
+          schema:
+            type: string
+            example: USD
+        - name: targets
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Comma-separated currency codes
+            example: EUR,GBP,JPY
+      responses:
+        "200":
+          description: Exchange rates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FxRates"
+
+  /fx/convert:
+    post:
+      operationId: convertCurrency
+      tags: [fx]
+      summary: Convert between currencies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FxConvertRequest"
+      responses:
+        "200":
+          description: Conversion result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FxConversionResult"
+
+  /fx/history:
+    get:
+      operationId: getFxHistory
+      tags: [fx]
+      summary: Get historical exchange rates for a currency pair
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Historical rates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FxRatePoint"
+
+  # NOTIFICATIONS
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for current user
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Notifications list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{notificationId}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # DASHBOARD
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard overview (balances, spending, activity)
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent transactions and activity feed
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /dashboard/spending-breakdown:
+    get:
+      operationId: getSpendingBreakdown
+      tags: [dashboard]
+      summary: Get spending by category for current month
+      responses:
+        "200":
+          description: Spending breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SpendingCategory"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +686,648 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+      required: [error, message]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        countryCode:
+          type: string
+        accountType:
+          type: string
+          enum: [personal, business]
+        passcode:
+          type: string
+      required: [email, firstName, lastName, countryCode, accountType, passcode]
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        passcode:
+          type: string
+      required: [email, passcode]
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        sessionToken:
+          type: string
+      required: [user, sessionToken]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        countryCode:
+          type: string
+        accountType:
+          type: string
+          enum: [personal, business]
+        kycStatus:
+          type: string
+          enum: [pending, in_review, approved, rejected, not_started]
+        onboardingStatus:
+          type: string
+          enum: [not_started, in_progress, completed]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, email, firstName, lastName, countryCode, accountType, kycStatus, onboardingStatus, createdAt]
+
+    StartOnboardingRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [personal, business]
+        countryCode:
+          type: string
+      required: [type, countryCode]
+
+    OnboardingSession:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        type:
+          type: string
+          enum: [personal, business]
+        currentStepId:
+          type: string
+        completedSteps:
+          type: array
+          items:
+            type: string
+        answers:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [in_progress, completed, abandoned]
+        nextStep:
+          $ref: "#/components/schemas/OnboardingStep"
+      required: [sessionId, type, currentStepId, completedSteps, answers, status]
+
+    OnboardingStepSubmission:
+      type: object
+      properties:
+        stepId:
+          type: string
+        answer:
+          additionalProperties: true
+      required: [stepId, answer]
+
+    OnboardingStep:
+      type: object
+      properties:
+        stepId:
+          type: string
+        screenName:
+          type: string
+        questionText:
+          type: string
+        questionType:
+          type: string
+          enum: [select, multiselect, text, date, phone, upload, otp, country_picker, info]
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/StepOption"
+        validationRules:
+          type: array
+          items:
+            type: string
+        requiredDocuments:
+          type: array
+          items:
+            type: string
+        countryConstraints:
+          type: array
+          items:
+            type: string
+        branchingLogic:
+          type: array
+          items:
+            $ref: "#/components/schemas/BranchRule"
+        isRequired:
+          type: boolean
+        helpText:
+          type: string
+      required: [stepId, screenName, questionText, questionType, isRequired]
+
+    StepOption:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+        icon:
+          type: string
+      required: [value, label]
+
+    BranchRule:
+      type: object
+      properties:
+        condition:
+          type: string
+        nextStepId:
+          type: string
+      required: [condition, nextStepId]
+
+    KycStatus:
+      type: object
+      properties:
+        userId:
+          type: string
+        overallStatus:
+          type: string
+          enum: [not_started, pending, in_review, approved, rejected]
+        identityStatus:
+          type: string
+          enum: [not_started, pending, in_review, approved, rejected]
+        addressStatus:
+          type: string
+          enum: [not_started, pending, in_review, approved, rejected]
+        livenessStatus:
+          type: string
+          enum: [not_started, pending, in_review, approved, rejected]
+        submittedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        rejectionReason:
+          type: string
+      required: [userId, overallStatus, identityStatus, addressStatus, livenessStatus]
+
+    KycDocumentSubmission:
+      type: object
+      properties:
+        documentType:
+          type: string
+          enum: [passport, national_id, drivers_license, utility_bill, bank_statement, company_registration]
+        documentFront:
+          type: string
+          description: Base64 or URL of front image
+        documentBack:
+          type: string
+          description: Base64 or URL of back image (optional)
+        selfieImage:
+          type: string
+          description: Base64 or URL of selfie
+      required: [documentType, documentFront]
+
+    KycCheck:
+      type: object
+      properties:
+        checkId:
+          type: string
+        checkType:
+          type: string
+          enum: [identity, address, liveness, sanctions, pep]
+        status:
+          type: string
+          enum: [pending, in_review, passed, failed]
+        result:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [checkId, checkType, status, createdAt, updatedAt]
+
+    Account:
+      type: object
+      properties:
+        accountId:
+          type: string
+        userId:
+          type: string
+        currency:
+          type: string
+        balance:
+          type: number
+        availableBalance:
+          type: number
+        accountNumber:
+          type: string
+        sortCode:
+          type: string
+        iban:
+          type: string
+        swift:
+          type: string
+        accountType:
+          type: string
+          enum: [current, savings, vault, crypto]
+        label:
+          type: string
+        color:
+          type: string
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [accountId, userId, currency, balance, availableBalance, accountType, isDefault, createdAt]
+
+    CreateAccountRequest:
+      type: object
+      properties:
+        currency:
+          type: string
+        accountType:
+          type: string
+          enum: [current, savings, vault]
+        label:
+          type: string
+      required: [currency, accountType]
+
+    Transaction:
+      type: object
+      properties:
+        transactionId:
+          type: string
+        accountId:
+          type: string
+        type:
+          type: string
+          enum: [credit, debit, transfer, fx_exchange, card_payment, atm, refund, topup]
+        amount:
+          type: number
+        currency:
+          type: string
+        description:
+          type: string
+        merchantName:
+          type: string
+        merchantCategory:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, failed, reversed]
+        createdAt:
+          type: string
+          format: date-time
+        counterpartyName:
+          type: string
+        reference:
+          type: string
+      required: [transactionId, accountId, type, amount, currency, status, createdAt]
+
+    TransactionPage:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+      required: [transactions, total, offset, limit]
+
+    Card:
+      type: object
+      properties:
+        cardId:
+          type: string
+        userId:
+          type: string
+        accountId:
+          type: string
+        cardType:
+          type: string
+          enum: [virtual, physical]
+        cardNetwork:
+          type: string
+          enum: [visa, mastercard]
+        lastFour:
+          type: string
+        expiryMonth:
+          type: integer
+        expiryYear:
+          type: integer
+        cardholderName:
+          type: string
+        status:
+          type: string
+          enum: [active, frozen, cancelled, pending_activation]
+        spendingLimit:
+          type: number
+        currency:
+          type: string
+        color:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [cardId, userId, accountId, cardType, cardNetwork, lastFour, expiryMonth, expiryYear, cardholderName, status, currency, createdAt]
+
+    IssueCardRequest:
+      type: object
+      properties:
+        accountId:
+          type: string
+        cardType:
+          type: string
+          enum: [virtual, physical]
+        cardNetwork:
+          type: string
+          enum: [visa, mastercard]
+        spendingLimit:
+          type: number
+        label:
+          type: string
+      required: [accountId, cardType, cardNetwork]
+
+    UpdateCardRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, frozen]
+        spendingLimit:
+          type: number
+        label:
+          type: string
+
+    Payment:
+      type: object
+      properties:
+        paymentId:
+          type: string
+        userId:
+          type: string
+        fromAccountId:
+          type: string
+        toAccountId:
+          type: string
+        type:
+          type: string
+          enum: [internal_transfer, bank_transfer, sepa, swift, instant, scheduled]
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, cancelled]
+        reference:
+          type: string
+        recipientName:
+          type: string
+        recipientIban:
+          type: string
+        recipientBic:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [paymentId, userId, fromAccountId, type, amount, currency, status, createdAt]
+
+    PaymentPage:
+      type: object
+      properties:
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+      required: [payments, total, offset, limit]
+
+    InitiatePaymentRequest:
+      type: object
+      properties:
+        fromAccountId:
+          type: string
+        type:
+          type: string
+          enum: [internal_transfer, bank_transfer, sepa, swift, instant]
+        amount:
+          type: number
+        currency:
+          type: string
+        reference:
+          type: string
+        recipientName:
+          type: string
+        recipientIban:
+          type: string
+        recipientBic:
+          type: string
+        toAccountId:
+          type: string
+      required: [fromAccountId, type, amount, currency]
+
+    FxRates:
+      type: object
+      properties:
+        base:
+          type: string
+        rates:
+          type: object
+          additionalProperties:
+            type: number
+        timestamp:
+          type: string
+          format: date-time
+      required: [base, rates, timestamp]
+
+    FxConvertRequest:
+      type: object
+      properties:
+        fromCurrency:
+          type: string
+        toCurrency:
+          type: string
+        amount:
+          type: number
+        fromAccountId:
+          type: string
+        execute:
+          type: boolean
+          description: If true, actually execute the conversion
+      required: [fromCurrency, toCurrency, amount]
+
+    FxConversionResult:
+      type: object
+      properties:
+        fromCurrency:
+          type: string
+        toCurrency:
+          type: string
+        fromAmount:
+          type: number
+        toAmount:
+          type: number
+        rate:
+          type: number
+        fee:
+          type: number
+        executed:
+          type: boolean
+        transactionId:
+          type: string
+      required: [fromCurrency, toCurrency, fromAmount, toAmount, rate, fee, executed]
+
+    FxRatePoint:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        rate:
+          type: number
+      required: [date, rate]
+
+    Notification:
+      type: object
+      properties:
+        notificationId:
+          type: string
+        userId:
+          type: string
+        type:
+          type: string
+          enum: [payment_received, payment_sent, card_transaction, kyc_update, system, security_alert, promotion]
+        title:
+          type: string
+        body:
+          type: string
+        isRead:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [notificationId, userId, type, title, body, isRead, createdAt]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalBalance:
+          type: number
+        totalBalanceCurrency:
+          type: string
+        monthlySpend:
+          type: number
+        monthlyIncome:
+          type: number
+        accountCount:
+          type: integer
+        cardCount:
+          type: integer
+        pendingPayments:
+          type: integer
+        unreadNotifications:
+          type: integer
+        kycStatus:
+          type: string
+      required: [totalBalance, totalBalanceCurrency, monthlySpend, monthlyIncome, accountCount, cardCount, pendingPayments, unreadNotifications, kycStatus]
+
+    ActivityItem:
+      type: object
+      properties:
+        activityId:
+          type: string
+        type:
+          type: string
+          enum: [transaction, payment, card_event, kyc_event, notification]
+        title:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        direction:
+          type: string
+          enum: [in, out, neutral]
+        iconType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [activityId, type, title, description, direction, iconType, createdAt]
+
+    SpendingCategory:
+      type: object
+      properties:
+        category:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        percentage:
+          type: number
+        color:
+          type: string
+        transactionCount:
+          type: integer
+      required: [category, amount, currency, percentage, color, transactionCount]
