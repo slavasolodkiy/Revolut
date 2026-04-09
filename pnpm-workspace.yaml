@@ -74,6 +74,20 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 overrides:
+  # ============================================================================
+  # PLATFORM SCOPE: Linux x64 only (Replit deployment target)
+  # ============================================================================
+  # This workspace targets Replit's Linux x64 environment exclusively.
+  # All non-Linux and non-x64 optional native binaries are excluded to:
+  #   (a) reduce install size and install time
+  #   (b) prevent binary resolution errors in CI
+  #
+  # Windows and macOS developers: use WSL2 or a devcontainer — native installs
+  # on those platforms will fail because the required platform binaries are
+  # explicitly excluded here. This is intentional and documented.
+  #
+  # DO NOT remove these exclusions without updating deployment targets and CI.
+  # ============================================================================
   # replit uses linux-x64 only, we can exclude all other platforms
   "esbuild>@esbuild/darwin-arm64": "-"
   "esbuild>@esbuild/darwin-x64": "-"

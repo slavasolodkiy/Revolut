@@ -83,11 +83,12 @@ ops/                   → Docker Compose, Dockerfiles, Caddy config, seed SQL, 
 - `GET /api/onboarding/status` — get user's onboarding status
 
 **Accounts / Transactions**
-- `GET /api/accounts`, `POST /api/accounts`, `GET /api/accounts/:id`
-- `GET /api/transactions/:accountId`
+- `GET /api/accounts`, `POST /api/accounts`, `GET /api/accounts/:accountId`
+- `GET /api/accounts/:accountId/transactions`
 
 **Cards**
-- `GET /api/cards`, `POST /api/cards`, `PATCH /api/cards/:cardId/freeze`
+- `GET /api/cards`, `POST /api/cards`
+- `GET /api/cards/:cardId`, `PATCH /api/cards/:cardId`
 
 **Payments**
 - `GET /api/payments`, `POST /api/payments`

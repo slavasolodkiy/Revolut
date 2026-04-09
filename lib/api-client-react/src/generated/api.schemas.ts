@@ -170,11 +170,12 @@ export interface OnboardingSession {
   nextStep?: OnboardingStep;
 }
 
-export type OnboardingStepSubmissionAnswer = { [key: string]: unknown };
-
 export interface OnboardingStepSubmission {
+  /** The stepId being answered (must match session.currentStepId) */
   stepId: string;
-  answer: OnboardingStepSubmissionAnswer;
+  /** The user's answer to this step. Type varies by questionType: string for select/text/phone/otp/country_picker/upload, null for info steps, object for structured responses.
+   */
+  answer: unknown;
 }
 
 export type KycStatusOverallStatus =
@@ -630,6 +631,21 @@ export interface SpendingCategory {
   percentage: number;
   color: string;
   transactionCount: number;
+}
+
+export type OnboardingStatusResponseOnboardingStatus =
+  (typeof OnboardingStatusResponseOnboardingStatus)[keyof typeof OnboardingStatusResponseOnboardingStatus];
+
+export const OnboardingStatusResponseOnboardingStatus = {
+  not_started: "not_started",
+  in_progress: "in_progress",
+  completed: "completed",
+  rejected: "rejected",
+} as const;
+
+export interface OnboardingStatusResponse {
+  userId: string;
+  onboardingStatus: OnboardingStatusResponseOnboardingStatus;
 }
 
 export type GetOnboardingStepsParams = {

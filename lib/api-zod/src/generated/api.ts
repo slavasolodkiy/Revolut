@@ -88,7 +88,69 @@ export const GetMeResponse = zod.object({
 });
 
 /**
- * @summary Start onboarding session
+ * @summary Get full onboarding step tree (public — no auth required)
+ */
+export const GetOnboardingStepsQueryParams = zod.object({
+  type: zod.enum(["personal", "business"]).optional(),
+});
+
+export const GetOnboardingStepsResponseItem = zod.object({
+  stepId: zod.string(),
+  screenName: zod.string(),
+  questionText: zod.string(),
+  questionType: zod.enum([
+    "select",
+    "multiselect",
+    "text",
+    "date",
+    "phone",
+    "upload",
+    "otp",
+    "country_picker",
+    "info",
+  ]),
+  options: zod
+    .array(
+      zod.object({
+        value: zod.string(),
+        label: zod.string(),
+        icon: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  validationRules: zod.array(zod.string()).optional(),
+  requiredDocuments: zod.array(zod.string()).optional(),
+  countryConstraints: zod.array(zod.string()).optional(),
+  branchingLogic: zod
+    .array(
+      zod.object({
+        condition: zod.string(),
+        nextStepId: zod.string(),
+      }),
+    )
+    .optional(),
+  isRequired: zod.boolean(),
+  helpText: zod.string().optional(),
+});
+export const GetOnboardingStepsResponse = zod.array(
+  GetOnboardingStepsResponseItem,
+);
+
+/**
+ * @summary Get the authenticated user's onboarding completion status
+ */
+export const GetOnboardingStatusResponse = zod.object({
+  userId: zod.string(),
+  onboardingStatus: zod.enum([
+    "not_started",
+    "in_progress",
+    "completed",
+    "rejected",
+  ]),
+});
+
+/**
+ * @summary Create a new onboarding session
  */
 export const StartOnboardingBody = zod.object({
   type: zod.enum(["personal", "business"]),
@@ -145,7 +207,7 @@ export const StartOnboardingResponse = zod.object({
 });
 
 /**
- * @summary Get current onboarding session state
+ * @summary Get current onboarding session state (owner only)
  */
 export const GetOnboardingSessionParams = zod.object({
   sessionId: zod.coerce.string(),
@@ -201,15 +263,21 @@ export const GetOnboardingSessionResponse = zod.object({
 });
 
 /**
- * @summary Submit an onboarding step answer
+ * @summary Submit an answer for the current onboarding step
  */
 export const SubmitOnboardingStepParams = zod.object({
   sessionId: zod.coerce.string(),
 });
 
 export const SubmitOnboardingStepBody = zod.object({
-  stepId: zod.string(),
-  answer: zod.record(zod.string(), zod.unknown()),
+  stepId: zod
+    .string()
+    .describe("The stepId being answered (must match session.currentStepId)"),
+  answer: zod
+    .unknown()
+    .describe(
+      "The user's answer to this step. Type varies by questionType: string for select\/text\/phone\/otp\/country_picker\/upload, null for info steps, object for structured responses.\n",
+    ),
 });
 
 export const SubmitOnboardingStepResponse = zod.object({
@@ -260,55 +328,6 @@ export const SubmitOnboardingStepResponse = zod.object({
     })
     .optional(),
 });
-
-/**
- * @summary Get full onboarding step tree (for rendering)
- */
-export const GetOnboardingStepsQueryParams = zod.object({
-  type: zod.enum(["personal", "business"]).optional(),
-});
-
-export const GetOnboardingStepsResponseItem = zod.object({
-  stepId: zod.string(),
-  screenName: zod.string(),
-  questionText: zod.string(),
-  questionType: zod.enum([
-    "select",
-    "multiselect",
-    "text",
-    "date",
-    "phone",
-    "upload",
-    "otp",
-    "country_picker",
-    "info",
-  ]),
-  options: zod
-    .array(
-      zod.object({
-        value: zod.string(),
-        label: zod.string(),
-        icon: zod.string().optional(),
-      }),
-    )
-    .optional(),
-  validationRules: zod.array(zod.string()).optional(),
-  requiredDocuments: zod.array(zod.string()).optional(),
-  countryConstraints: zod.array(zod.string()).optional(),
-  branchingLogic: zod
-    .array(
-      zod.object({
-        condition: zod.string(),
-        nextStepId: zod.string(),
-      }),
-    )
-    .optional(),
-  isRequired: zod.boolean(),
-  helpText: zod.string().optional(),
-});
-export const GetOnboardingStepsResponse = zod.array(
-  GetOnboardingStepsResponseItem,
-);
 
 /**
  * @summary Get KYC verification status for current user

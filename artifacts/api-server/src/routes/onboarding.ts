@@ -537,18 +537,42 @@ router.post("/onboarding/session/:sessionId/step", requireAuth, async (req, res)
     return;
   }
 
+  // SESSION_COMPLETED: reject before parsing body so callers get a clear error
+  if (session.status === "completed") {
+    res.status(409).json({
+      error: "SESSION_COMPLETED",
+      message: "Onboarding session is already completed. No further steps can be submitted.",
+    });
+    return;
+  }
+
   const parsed = SubmitOnboardingStepBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Validation error", message: parsed.error.message });
     return;
   }
 
-  if (session.status === "completed") {
-    res.status(400).json({ error: "Bad request", message: "Onboarding session is already completed" });
+  const steps = session.type === "business" ? businessSteps : personalSteps;
+
+  // INVALID_STEP_ID: submitted step must exist in the catalogue
+  const stepDef = steps.find((s) => s.stepId === parsed.data.stepId);
+  if (!stepDef) {
+    res.status(400).json({
+      error: "INVALID_STEP_ID",
+      message: `Step '${parsed.data.stepId}' does not exist in the ${session.type} onboarding catalogue.`,
+    });
     return;
   }
 
-  const steps = session.type === "business" ? businessSteps : personalSteps;
+  // STEP_OUT_OF_ORDER: submitted step must be the session's current step
+  if (parsed.data.stepId !== session.currentStepId) {
+    res.status(409).json({
+      error: "STEP_OUT_OF_ORDER",
+      message: `Expected step '${session.currentStepId}' but received '${parsed.data.stepId}'. Steps must be submitted in order.`,
+    });
+    return;
+  }
+
   const completedSteps = [...(session.completedSteps as string[]), parsed.data.stepId];
   const answers = { ...(session.answers as Record<string, unknown>), [parsed.data.stepId]: parsed.data.answer };
 

@@ -105,6 +105,8 @@ paths:
       operationId: logoutUser
       tags: [auth]
       summary: Logout current session
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: Logged out
@@ -118,6 +120,8 @@ paths:
       operationId: getMe
       tags: [auth]
       summary: Get current authenticated user
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: Current user
@@ -133,74 +137,11 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   # ONBOARDING
-  /onboarding/start:
-    post:
-      operationId: startOnboarding
-      tags: [onboarding]
-      summary: Start onboarding session
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/StartOnboardingRequest"
-      responses:
-        "200":
-          description: Onboarding session started
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OnboardingSession"
-
-  /onboarding/session/{sessionId}:
-    get:
-      operationId: getOnboardingSession
-      tags: [onboarding]
-      summary: Get current onboarding session state
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Onboarding session
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OnboardingSession"
-
-  /onboarding/session/{sessionId}/step:
-    post:
-      operationId: submitOnboardingStep
-      tags: [onboarding]
-      summary: Submit an onboarding step answer
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OnboardingStepSubmission"
-      responses:
-        "200":
-          description: Next step or completion
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OnboardingSession"
-
   /onboarding/steps:
     get:
       operationId: getOnboardingSteps
       tags: [onboarding]
-      summary: Get full onboarding step tree (for rendering)
+      summary: Get full onboarding step tree (public — no auth required)
       parameters:
         - name: type
           in: query
@@ -218,12 +159,168 @@ paths:
                 items:
                   $ref: "#/components/schemas/OnboardingStep"
 
+  /onboarding/status:
+    get:
+      operationId: getOnboardingStatus
+      tags: [onboarding]
+      summary: Get the authenticated user's onboarding completion status
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Onboarding status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingStatusResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /onboarding/start:
+    post:
+      operationId: startOnboarding
+      tags: [onboarding]
+      summary: Create a new onboarding session
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartOnboardingRequest"
+      responses:
+        "200":
+          description: Onboarding session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingSession"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /onboarding/session/{sessionId}:
+    get:
+      operationId: getOnboardingSession
+      tags: [onboarding]
+      summary: Get current onboarding session state (owner only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Onboarding session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingSession"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden — session belongs to a different user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /onboarding/session/{sessionId}/step:
+    post:
+      operationId: submitOnboardingStep
+      tags: [onboarding]
+      summary: Submit an answer for the current onboarding step
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingStepSubmission"
+      responses:
+        "200":
+          description: Step accepted — returns updated session with next step
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingSession"
+        "400":
+          description: >
+            INVALID_STEP_ID — the submitted stepId does not exist in the onboarding
+            catalogue for this session type.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden — session belongs to a different user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: >
+            STEP_OUT_OF_ORDER — stepId does not match session.currentStepId; or
+            SESSION_COMPLETED — the session has already been completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # KYC
   /kyc/status:
     get:
       operationId: getKycStatus
       tags: [kyc]
       summary: Get KYC verification status for current user
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: KYC status
@@ -237,6 +334,8 @@ paths:
       operationId: submitKycDocument
       tags: [kyc]
       summary: Submit a KYC document for verification
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -256,6 +355,8 @@ paths:
       operationId: listKycChecks
       tags: [kyc]
       summary: List all KYC checks for current user
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: KYC checks
@@ -272,6 +373,8 @@ paths:
       operationId: listAccounts
       tags: [accounts]
       summary: List all accounts for current user
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: List of accounts
@@ -285,6 +388,8 @@ paths:
       operationId: createAccount
       tags: [accounts]
       summary: Create a new currency account/pocket
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -304,6 +409,8 @@ paths:
       operationId: getAccount
       tags: [accounts]
       summary: Get account details
+      security:
+        - BearerAuth: []
       parameters:
         - name: accountId
           in: path
@@ -323,6 +430,8 @@ paths:
       operationId: getAccountTransactions
       tags: [accounts]
       summary: Get transactions for an account
+      security:
+        - BearerAuth: []
       parameters:
         - name: accountId
           in: path
@@ -357,6 +466,8 @@ paths:
       operationId: listCards
       tags: [cards]
       summary: List all cards for current user
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: List of cards
@@ -370,6 +481,8 @@ paths:
       operationId: issueCard
       tags: [cards]
       summary: Issue a new virtual or physical card
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -389,6 +502,8 @@ paths:
       operationId: getCard
       tags: [cards]
       summary: Get card details
+      security:
+        - BearerAuth: []
       parameters:
         - name: cardId
           in: path
@@ -406,6 +521,8 @@ paths:
       operationId: updateCard
       tags: [cards]
       summary: Freeze/unfreeze or update card settings
+      security:
+        - BearerAuth: []
       parameters:
         - name: cardId
           in: path
@@ -432,6 +549,8 @@ paths:
       operationId: listPayments
       tags: [payments]
       summary: List payments/transfers
+      security:
+        - BearerAuth: []
       parameters:
         - name: limit
           in: query
@@ -459,6 +578,8 @@ paths:
       operationId: initiatePayment
       tags: [payments]
       summary: Initiate a payment or transfer
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -498,6 +619,8 @@ paths:
       operationId: getFxRates
       tags: [fx]
       summary: Get live exchange rates
+      security:
+        - BearerAuth: []
       parameters:
         - name: base
           in: query
@@ -525,6 +648,8 @@ paths:
       operationId: convertCurrency
       tags: [fx]
       summary: Convert between currencies
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -544,6 +669,8 @@ paths:
       operationId: getFxHistory
       tags: [fx]
       summary: Get historical exchange rates for a currency pair
+      security:
+        - BearerAuth: []
       parameters:
         - name: from
           in: query
@@ -576,6 +703,8 @@ paths:
       operationId: listNotifications
       tags: [notifications]
       summary: List notifications for current user
+      security:
+        - BearerAuth: []
       parameters:
         - name: unreadOnly
           in: query
@@ -602,6 +731,8 @@ paths:
       operationId: markNotificationRead
       tags: [notifications]
       summary: Mark a notification as read
+      security:
+        - BearerAuth: []
       parameters:
         - name: notificationId
           in: path
@@ -621,6 +752,8 @@ paths:
       operationId: markAllNotificationsRead
       tags: [notifications]
       summary: Mark all notifications as read
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: All marked read
@@ -635,6 +768,8 @@ paths:
       operationId: getDashboardSummary
       tags: [dashboard]
       summary: Get dashboard overview (balances, spending, activity)
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: Dashboard summary
@@ -648,6 +783,8 @@ paths:
       operationId: getRecentActivity
       tags: [dashboard]
       summary: Get recent transactions and activity feed
+      security:
+        - BearerAuth: []
       parameters:
         - name: limit
           in: query
@@ -669,6 +806,8 @@ paths:
       operationId: getSpendingBreakdown
       tags: [dashboard]
       summary: Get spending by category for current month
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: Spending breakdown
@@ -816,8 +955,12 @@ components:
       properties:
         stepId:
           type: string
+          description: The stepId being answered (must match session.currentStepId)
         answer:
-          additionalProperties: true
+          description: >
+            The user's answer to this step. Type varies by questionType:
+            string for select/text/phone/otp/country_picker/upload, null for info steps,
+            object for structured responses.
       required: [stepId, answer]
 
     OnboardingStep:
@@ -1331,3 +1474,21 @@ components:
         transactionCount:
           type: integer
       required: [category, amount, currency, percentage, color, transactionCount]
+
+    OnboardingStatusResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+        onboardingStatus:
+          type: string
+          enum: [not_started, in_progress, completed, rejected]
+      required: [userId, onboardingStatus]
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: >
+        Bearer token obtained from POST /api/auth/login.
+        Pass as: Authorization: Bearer <token>

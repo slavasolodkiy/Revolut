@@ -44,6 +44,7 @@ import type {
   LoginRequest,
   Notification,
   OnboardingSession,
+  OnboardingStatusResponse,
   OnboardingStep,
   OnboardingStepSubmission,
   Payment,
@@ -458,270 +459,7 @@ export function useGetMe<
 }
 
 /**
- * @summary Start onboarding session
- */
-export const getStartOnboardingUrl = () => {
-  return `/api/onboarding/start`;
-};
-
-export const startOnboarding = async (
-  startOnboardingRequest: StartOnboardingRequest,
-  options?: RequestInit,
-): Promise<OnboardingSession> => {
-  return customFetch<OnboardingSession>(getStartOnboardingUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(startOnboardingRequest),
-  });
-};
-
-export const getStartOnboardingMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof startOnboarding>>,
-    TError,
-    { data: BodyType<StartOnboardingRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof startOnboarding>>,
-  TError,
-  { data: BodyType<StartOnboardingRequest> },
-  TContext
-> => {
-  const mutationKey = ["startOnboarding"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof startOnboarding>>,
-    { data: BodyType<StartOnboardingRequest> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return startOnboarding(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type StartOnboardingMutationResult = NonNullable<
-  Awaited<ReturnType<typeof startOnboarding>>
->;
-export type StartOnboardingMutationBody = BodyType<StartOnboardingRequest>;
-export type StartOnboardingMutationError = ErrorType<unknown>;
-
-/**
- * @summary Start onboarding session
- */
-export const useStartOnboarding = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof startOnboarding>>,
-    TError,
-    { data: BodyType<StartOnboardingRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof startOnboarding>>,
-  TError,
-  { data: BodyType<StartOnboardingRequest> },
-  TContext
-> => {
-  return useMutation(getStartOnboardingMutationOptions(options));
-};
-
-/**
- * @summary Get current onboarding session state
- */
-export const getGetOnboardingSessionUrl = (sessionId: string) => {
-  return `/api/onboarding/session/${sessionId}`;
-};
-
-export const getOnboardingSession = async (
-  sessionId: string,
-  options?: RequestInit,
-): Promise<OnboardingSession> => {
-  return customFetch<OnboardingSession>(getGetOnboardingSessionUrl(sessionId), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetOnboardingSessionQueryKey = (sessionId: string) => {
-  return [`/api/onboarding/session/${sessionId}`] as const;
-};
-
-export const getGetOnboardingSessionQueryOptions = <
-  TData = Awaited<ReturnType<typeof getOnboardingSession>>,
-  TError = ErrorType<unknown>,
->(
-  sessionId: string,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getOnboardingSession>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getGetOnboardingSessionQueryKey(sessionId);
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getOnboardingSession>>
-  > = ({ signal }) =>
-    getOnboardingSession(sessionId, { signal, ...requestOptions });
-
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!sessionId,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getOnboardingSession>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetOnboardingSessionQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getOnboardingSession>>
->;
-export type GetOnboardingSessionQueryError = ErrorType<unknown>;
-
-/**
- * @summary Get current onboarding session state
- */
-
-export function useGetOnboardingSession<
-  TData = Awaited<ReturnType<typeof getOnboardingSession>>,
-  TError = ErrorType<unknown>,
->(
-  sessionId: string,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getOnboardingSession>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetOnboardingSessionQueryOptions(sessionId, options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Submit an onboarding step answer
- */
-export const getSubmitOnboardingStepUrl = (sessionId: string) => {
-  return `/api/onboarding/session/${sessionId}/step`;
-};
-
-export const submitOnboardingStep = async (
-  sessionId: string,
-  onboardingStepSubmission: OnboardingStepSubmission,
-  options?: RequestInit,
-): Promise<OnboardingSession> => {
-  return customFetch<OnboardingSession>(getSubmitOnboardingStepUrl(sessionId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(onboardingStepSubmission),
-  });
-};
-
-export const getSubmitOnboardingStepMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof submitOnboardingStep>>,
-    TError,
-    { sessionId: string; data: BodyType<OnboardingStepSubmission> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof submitOnboardingStep>>,
-  TError,
-  { sessionId: string; data: BodyType<OnboardingStepSubmission> },
-  TContext
-> => {
-  const mutationKey = ["submitOnboardingStep"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof submitOnboardingStep>>,
-    { sessionId: string; data: BodyType<OnboardingStepSubmission> }
-  > = (props) => {
-    const { sessionId, data } = props ?? {};
-
-    return submitOnboardingStep(sessionId, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type SubmitOnboardingStepMutationResult = NonNullable<
-  Awaited<ReturnType<typeof submitOnboardingStep>>
->;
-export type SubmitOnboardingStepMutationBody =
-  BodyType<OnboardingStepSubmission>;
-export type SubmitOnboardingStepMutationError = ErrorType<unknown>;
-
-/**
- * @summary Submit an onboarding step answer
- */
-export const useSubmitOnboardingStep = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof submitOnboardingStep>>,
-    TError,
-    { sessionId: string; data: BodyType<OnboardingStepSubmission> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof submitOnboardingStep>>,
-  TError,
-  { sessionId: string; data: BodyType<OnboardingStepSubmission> },
-  TContext
-> => {
-  return useMutation(getSubmitOnboardingStepMutationOptions(options));
-};
-
-/**
- * @summary Get full onboarding step tree (for rendering)
+ * @summary Get full onboarding step tree (public — no auth required)
  */
 export const getGetOnboardingStepsUrl = (params?: GetOnboardingStepsParams) => {
   const normalizedParams = new URLSearchParams();
@@ -791,7 +529,7 @@ export type GetOnboardingStepsQueryResult = NonNullable<
 export type GetOnboardingStepsQueryError = ErrorType<unknown>;
 
 /**
- * @summary Get full onboarding step tree (for rendering)
+ * @summary Get full onboarding step tree (public — no auth required)
  */
 
 export function useGetOnboardingSteps<
@@ -816,6 +554,344 @@ export function useGetOnboardingSteps<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get the authenticated user's onboarding completion status
+ */
+export const getGetOnboardingStatusUrl = () => {
+  return `/api/onboarding/status`;
+};
+
+export const getOnboardingStatus = async (
+  options?: RequestInit,
+): Promise<OnboardingStatusResponse> => {
+  return customFetch<OnboardingStatusResponse>(getGetOnboardingStatusUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetOnboardingStatusQueryKey = () => {
+  return [`/api/onboarding/status`] as const;
+};
+
+export const getGetOnboardingStatusQueryOptions = <
+  TData = Awaited<ReturnType<typeof getOnboardingStatus>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getOnboardingStatus>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetOnboardingStatusQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getOnboardingStatus>>
+  > = ({ signal }) => getOnboardingStatus({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getOnboardingStatus>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetOnboardingStatusQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getOnboardingStatus>>
+>;
+export type GetOnboardingStatusQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get the authenticated user's onboarding completion status
+ */
+
+export function useGetOnboardingStatus<
+  TData = Awaited<ReturnType<typeof getOnboardingStatus>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getOnboardingStatus>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetOnboardingStatusQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new onboarding session
+ */
+export const getStartOnboardingUrl = () => {
+  return `/api/onboarding/start`;
+};
+
+export const startOnboarding = async (
+  startOnboardingRequest: StartOnboardingRequest,
+  options?: RequestInit,
+): Promise<OnboardingSession> => {
+  return customFetch<OnboardingSession>(getStartOnboardingUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(startOnboardingRequest),
+  });
+};
+
+export const getStartOnboardingMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startOnboarding>>,
+    TError,
+    { data: BodyType<StartOnboardingRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof startOnboarding>>,
+  TError,
+  { data: BodyType<StartOnboardingRequest> },
+  TContext
+> => {
+  const mutationKey = ["startOnboarding"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof startOnboarding>>,
+    { data: BodyType<StartOnboardingRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return startOnboarding(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type StartOnboardingMutationResult = NonNullable<
+  Awaited<ReturnType<typeof startOnboarding>>
+>;
+export type StartOnboardingMutationBody = BodyType<StartOnboardingRequest>;
+export type StartOnboardingMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a new onboarding session
+ */
+export const useStartOnboarding = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startOnboarding>>,
+    TError,
+    { data: BodyType<StartOnboardingRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof startOnboarding>>,
+  TError,
+  { data: BodyType<StartOnboardingRequest> },
+  TContext
+> => {
+  return useMutation(getStartOnboardingMutationOptions(options));
+};
+
+/**
+ * @summary Get current onboarding session state (owner only)
+ */
+export const getGetOnboardingSessionUrl = (sessionId: string) => {
+  return `/api/onboarding/session/${sessionId}`;
+};
+
+export const getOnboardingSession = async (
+  sessionId: string,
+  options?: RequestInit,
+): Promise<OnboardingSession> => {
+  return customFetch<OnboardingSession>(getGetOnboardingSessionUrl(sessionId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetOnboardingSessionQueryKey = (sessionId: string) => {
+  return [`/api/onboarding/session/${sessionId}`] as const;
+};
+
+export const getGetOnboardingSessionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getOnboardingSession>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  sessionId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getOnboardingSession>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetOnboardingSessionQueryKey(sessionId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getOnboardingSession>>
+  > = ({ signal }) =>
+    getOnboardingSession(sessionId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!sessionId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getOnboardingSession>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetOnboardingSessionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getOnboardingSession>>
+>;
+export type GetOnboardingSessionQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get current onboarding session state (owner only)
+ */
+
+export function useGetOnboardingSession<
+  TData = Awaited<ReturnType<typeof getOnboardingSession>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  sessionId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getOnboardingSession>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetOnboardingSessionQueryOptions(sessionId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Submit an answer for the current onboarding step
+ */
+export const getSubmitOnboardingStepUrl = (sessionId: string) => {
+  return `/api/onboarding/session/${sessionId}/step`;
+};
+
+export const submitOnboardingStep = async (
+  sessionId: string,
+  onboardingStepSubmission: OnboardingStepSubmission,
+  options?: RequestInit,
+): Promise<OnboardingSession> => {
+  return customFetch<OnboardingSession>(getSubmitOnboardingStepUrl(sessionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(onboardingStepSubmission),
+  });
+};
+
+export const getSubmitOnboardingStepMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitOnboardingStep>>,
+    TError,
+    { sessionId: string; data: BodyType<OnboardingStepSubmission> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitOnboardingStep>>,
+  TError,
+  { sessionId: string; data: BodyType<OnboardingStepSubmission> },
+  TContext
+> => {
+  const mutationKey = ["submitOnboardingStep"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitOnboardingStep>>,
+    { sessionId: string; data: BodyType<OnboardingStepSubmission> }
+  > = (props) => {
+    const { sessionId, data } = props ?? {};
+
+    return submitOnboardingStep(sessionId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitOnboardingStepMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitOnboardingStep>>
+>;
+export type SubmitOnboardingStepMutationBody =
+  BodyType<OnboardingStepSubmission>;
+export type SubmitOnboardingStepMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Submit an answer for the current onboarding step
+ */
+export const useSubmitOnboardingStep = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitOnboardingStep>>,
+    TError,
+    { sessionId: string; data: BodyType<OnboardingStepSubmission> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitOnboardingStep>>,
+  TError,
+  { sessionId: string; data: BodyType<OnboardingStepSubmission> },
+  TContext
+> => {
+  return useMutation(getSubmitOnboardingStepMutationOptions(options));
+};
 
 /**
  * @summary Get KYC verification status for current user

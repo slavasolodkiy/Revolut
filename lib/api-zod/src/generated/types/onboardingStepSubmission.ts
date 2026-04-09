@@ -5,9 +5,11 @@
  * Revolut-inspired reference fintech platform API
  * OpenAPI spec version: 0.1.0
  */
-import type { OnboardingStepSubmissionAnswer } from "./onboardingStepSubmissionAnswer";
 
 export interface OnboardingStepSubmission {
+  /** The stepId being answered (must match session.currentStepId) */
   stepId: string;
-  answer: OnboardingStepSubmissionAnswer;
+  /** The user's answer to this step. Type varies by questionType: string for select/text/phone/otp/country_picker/upload, null for info steps, object for structured responses.
+   */
+  answer: unknown;
 }

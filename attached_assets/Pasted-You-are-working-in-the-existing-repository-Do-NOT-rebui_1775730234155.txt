@@ -1,0 +1,75 @@
+You are working in the existing repository. Do NOT rebuild from scratch.
+
+Goal: Sprint 3 = close critical correctness gaps + restore trust in docs/CI/reproducibility.
+
+Must keep:
+- Existing architecture and clean-room constraints
+- Incremental commits with clear messages
+- Final push to GitHub
+
+Tasks:
+
+A) Fix critical onboarding integrity bug
+1. In POST /api/onboarding/session/:sessionId/step:
+   - Reject unknown stepId with 400.
+   - Enforce that submitted stepId equals session.currentStepId; otherwise 409 (or 400 with explicit code).
+   - Do NOT allow skipping steps or forcing completion.
+2. Keep ownership/auth behavior as implemented.
+3. Add explicit error codes/messages for:
+   - INVALID_STEP_ID
+   - STEP_OUT_OF_ORDER
+   - SESSION_COMPLETED
+
+B) Align OpenAPI with actual backend
+1. Add /onboarding/status to lib/api-spec/openapi.yaml.
+2. Ensure all onboarding routes in spec match implemented paths.
+3. Add security scheme + security requirements for protected endpoints (except public ones like /healthz and /onboarding/steps).
+4. Regenerate API clients/schemas and verify no type collisions.
+
+C) Restore CI (currently missing)
+1. Add .github/workflows/ci.yml.
+2. CI must run on push + pull_request to main:
+   - pnpm install (frozen lockfile)
+   - pnpm run typecheck
+   - pnpm run build
+   - pnpm --filter @workspace/api-server run test
+3. Update docs/status to reflect actual CI state only after file exists.
+
+D) Fix docs-contract drift
+1. Update replit.md route table:
+   - transactions path must match code (/api/accounts/:accountId/transactions)
+   - card update path must match code (/api/cards/:cardId)
+2. Remove any claims that are not true in repo.
+3. Keep STATUS.md strictly factual.
+
+E) Improve reproducibility and cross-platform scripts
+1. Replace shell-specific scripts:
+   - root preinstall should not require `sh`
+   - api-server dev should not require `export`
+2. Resolve Rollup optional dependency issue for Windows:
+   - do not exclude required win32 rollup package in pnpm-workspace overrides
+   - ensure build/test can run on both Linux and Windows
+3. If intentionally Linux-only, document it explicitly and remove contradictory claims.
+
+F) Strengthen tests
+1. Extend onboarding tests with API-level cases for:
+   - invalid stepId -> 400
+   - out-of-order step submission -> 409/400
+   - attempt to jump directly to review/completed -> rejected
+2. Keep existing auth and ownership tests.
+
+Acceptance criteria:
+1. Critical bug fixed: cannot complete onboarding by sending arbitrary stepId.
+2. OpenAPI matches backend onboarding endpoints including /onboarding/status.
+3. .github/workflows/ci.yml exists in repo root and passes.
+4. replit.md and STATUS.md match actual repo behavior.
+5. Commands pass on clean install:
+   - pnpm run typecheck
+   - pnpm run build
+   - pnpm --filter @workspace/api-server run test
+
+Final response format:
+1) Changed files
+2) What was fixed by sections A-F
+3) Exact command results
+4) Remaining known gaps (if any)
