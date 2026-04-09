@@ -1,0 +1,24 @@
+question_id,screen_name,question_text,answer_type,options,validation_rules,branch_if,next_step,required_docs,country_constraints,error_states,source_id,confidence
+personal.welcome,Welcome,Welcome to NovaPay. Let's get you set up.,info,,"",,"full_name",,all,,SRC-01,high
+personal.full_name,Your Name,What is your full legal name?,text_split,"first_name|last_name","required;min:2",,"date_of_birth",,all,name_too_short;name_contains_invalid_chars,SRC-01,high
+personal.date_of_birth,Date of Birth,What is your date of birth?,date,,"required;age:18;not_future",,"phone_number",,all,under_18;invalid_date;future_date,SRC-01,high
+personal.phone_number,Phone Number,What is your phone number?,phone,,"required;e164",,"phone_otp",,all,invalid_format;already_registered,SRC-01,high
+personal.phone_otp,Verify Phone,Enter the 6-digit code sent to your phone.,otp,,"required;length:6;numeric",,"address_country",,all,wrong_code;expired;too_many_attempts,SRC-01,high
+personal.address_country,Country of Residence,Which country do you live in?,country_picker,,"required",answer==='US'→us_ssn,"employment_status",,all,unsupported_country,SRC-01,high
+personal.us_ssn,Social Security Number,Please enter your Social Security Number.,text,,"required;pattern:^\d{3}-?\d{2}-?\d{4}$",,"employment_status","ssn_verification",US,invalid_format;already_used,SRC-02,high
+personal.employment_status,Employment Status,"What best describes your employment status?",select,"employed|self_employed|student|retired|unemployed","required",answer==='self_employed'→business_income,"income_source",,all,none,SRC-01,high
+personal.business_income,Business Income,"Describe your self-employed business and estimated annual income.",text,,"required;min:10",,"income_source",,all,too_short,SRC-01,high
+personal.income_source,Source of Income,What is your primary source of income?,select,"salary|investments|savings|benefits|other","required",,"document_type",,all,none,SRC-01,high
+personal.document_type,Identity Document,Which document will you use to verify your identity?,select,"passport|national_id|drivers_license","required",,"document_upload",,all,none,SRC-01,high
+personal.document_upload,Upload Document,Please upload a photo of your identity document.,upload,,"required;image;max_size:10mb;min_resolution:640x480",,"selfie","passport|national_id|drivers_license",all,blurry;expired_document;wrong_document_type;upload_failed,SRC-01,high
+personal.selfie,Take a Selfie,Take a selfie so we can verify it matches your document.,upload,,"required;image;liveness;face_match",,"review","selfie",all,liveness_failed;face_mismatch;blurry;no_face_detected,SRC-01,high
+personal.review,Review & Submit,Please review your information before submitting.,info,,"",,"completed",,all,none,SRC-01,high
+business.welcome,Business Welcome,Set up your NovaPay Business account.,info,,"",,"business_name",,all,,SRC-01,high
+business.business_name,Business Name,What is your business name?,text,,"required;min:2",,"business_type",,all,too_short;invalid_chars,SRC-01,high
+business.business_type,Business Type,What type of business is it?,select,"sole_trader|ltd|llc|partnership|nonprofit","required",answer==='sole_trader'→director_details,"business_country",,all,none,SRC-01,high
+business.business_country,Country of Registration,Where is your business registered?,country_picker,,"required",,"registration_number",,all,unsupported_country,SRC-01,high
+business.registration_number,Registration Number,What is your company registration number?,text,,"required",,"company_docs",,all,not_found;invalid_format,SRC-01,high
+business.company_docs,Company Documents,Upload your company registration documents.,upload,,"required;pdf|image","","director_details","company_registration|articles_of_association",all,missing_page;expired;wrong_company;upload_failed,SRC-01,high
+business.director_details,Director Details,Tell us about the company director.,text_complex,"full_name|date_of_birth|nationality","required",,"ubo_details",,all,incomplete,SRC-01,high
+business.ubo_details,Ultimate Beneficial Owner,Who owns 25% or more of the company?,text_complex,"full_name|ownership_percentage|nationality","required",,"review",,all,incomplete;total_over_100,SRC-01,high
+business.review,Review & Submit,Review your business information.,info,,"",,"completed",,all,none,SRC-01,high

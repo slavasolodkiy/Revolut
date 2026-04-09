@@ -2,7 +2,7 @@
 
 ## Overview
 
-Full-stack fintech reference platform built as a Revolut clean-room study. Includes research docs, architecture docs, a React+Vite frontend, Express backend, PostgreSQL database with 9 tables, OpenAPI spec, auto-generated hooks/schemas, and ops setup.
+Full-stack fintech reference platform built as a Revolut clean-room study. Includes research docs, architecture docs, a React+Vite frontend, Express backend, PostgreSQL database with 9 tables, OpenAPI spec, auto-generated hooks/schemas, ops setup, automated tests, and GitHub Actions CI.
 
 ## Stack
 
@@ -16,30 +16,34 @@ Full-stack fintech reference platform built as a Revolut clean-room study. Inclu
 - **API codegen**: Orval (from OpenAPI spec at `lib/api-spec/openapi.yaml`)
 - **Frontend**: React + Vite (port 21975), Tailwind CSS, shadcn/ui, Radix UI, Recharts
 - **Auth**: SHA-256 bearer token sessions stored in PostgreSQL
+- **Testing**: Vitest + Supertest (API integration + unit tests)
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`)
 - **Build**: esbuild (CJS bundle for API)
 
 ## Project Structure
 
 ```
 artifacts/
-  api-server/          → Express API server (all backend routes)
-  fintech-platform/    → React+Vite frontend (12 pages)
-  mockup-sandbox/      → Design component sandbox
+  api-server/          → Express API server (all backend routes + tests)
+  fintech-platform/    → React+Vite frontend (13 pages)
+  mockup-sandbox/      → Design component sandbox (dev only, excluded from build)
 lib/
   api-spec/            → OpenAPI 3.1 spec (9 domains)
   api-client-react/    → Generated React Query hooks + Zod schemas
   api-zod/             → Generated Zod validation schemas
   db/                  → Drizzle schema + db client
-research/              → Competitor analysis, feature matrix, API catalog
+research/              → Competitor analysis, feature matrix, API catalog, CSV matrices
 architecture/          → System context, microservices catalog, risks
 product/integrations-stubs/  → KYC, payments rail, notifications stubs
-ops/                   → Docker Compose, env.example
+ops/                   → Docker Compose, Dockerfiles, Caddy config, seed SQL, env.example
+.github/workflows/     → GitHub Actions CI pipeline
 ```
 
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
+- `pnpm run build` — typecheck + build all packages (mockup-sandbox skipped)
+- `pnpm --filter @workspace/api-server run test` — run API unit + integration tests
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
@@ -55,7 +59,7 @@ ops/                   → Docker Compose, env.example
 
 1. `users` — user accounts, KYC status, onboarding status
 2. `sessions` — bearer token sessions (30-day expiry)
-3. `onboarding_sessions` — multi-step onboarding wizard state
+3. `onboarding_sessions` — multi-step onboarding wizard state (branching)
 4. `accounts` — multi-currency accounts (GBP, EUR, USD, savings)
 5. `transactions` — transaction history per account
 6. `cards` — virtual and physical card records
@@ -65,28 +69,53 @@ ops/                   → Docker Compose, env.example
 
 ## API Routes (all at /api)
 
+**Auth**
 - `POST /api/auth/register` — register new user
 - `POST /api/auth/login` — login, returns session token
 - `POST /api/auth/logout` — revoke session
 - `GET /api/auth/me` — get current user
-- `GET /api/accounts` — list accounts
-- `POST /api/accounts` — create account
-- `GET /api/accounts/:accountId` — get account
-- `GET /api/transactions/:accountId` — list transactions
-- `GET /api/cards` — list cards
-- `POST /api/cards` — issue card
-- `PATCH /api/cards/:cardId/freeze` — freeze/unfreeze card
-- `GET /api/payments` — list payments
-- `POST /api/payments` — initiate payment
-- `GET /api/fx/rates` — get FX rates
-- `POST /api/fx/convert` — convert currency
-- `GET /api/notifications` — list notifications
-- `PATCH /api/notifications/:id/read` — mark as read
-- `GET /api/kyc/status` — get KYC status
-- `POST /api/kyc/submit` — submit KYC documents
-- `GET /api/dashboard/summary` — dashboard aggregated stats
-- `GET /api/onboarding/status` — onboarding step status
-- `POST /api/onboarding/step` — advance onboarding step
+
+**Onboarding** (all except /steps require Bearer token)
+- `GET /api/onboarding/steps` — step catalogue (personal/business)
+- `POST /api/onboarding/start` — create new session
+- `GET /api/onboarding/session/:id` — get session (owner only)
+- `POST /api/onboarding/session/:id/step` — advance step (owner only, branching engine)
+- `GET /api/onboarding/status` — get user's onboarding status
+
+**Accounts / Transactions**
+- `GET /api/accounts`, `POST /api/accounts`, `GET /api/accounts/:id`
+- `GET /api/transactions/:accountId`
+
+**Cards**
+- `GET /api/cards`, `POST /api/cards`, `PATCH /api/cards/:cardId/freeze`
+
+**Payments**
+- `GET /api/payments`, `POST /api/payments`
+
+**FX**
+- `GET /api/fx/rates`, `POST /api/fx/convert`
+
+**Notifications**
+- `GET /api/notifications`, `PATCH /api/notifications/:id/read`
+
+**KYC**
+- `GET /api/kyc/status`, `POST /api/kyc/submit`
+
+**Dashboard**
+- `GET /api/dashboard/summary`
+
+## Onboarding Branching Engine
+
+The onboarding wizard uses an explicit `defaultNextStepId` per step (not array-position fallback) so branching is unambiguous:
+
+| Current step | Answer | Next step |
+|---|---|---|
+| `address_country` | `"US"` | `us_ssn` |
+| `address_country` | any other | `employment_status` |
+| `employment_status` | `"self_employed"` | `business_income` |
+| `employment_status` | any other | `income_source` |
+| `business_type` | `"sole_trader"` | `director_details` (skips `company_docs`) |
+| `business_type` | any other | `business_country` |
 
 ## Auth Architecture
 
@@ -101,7 +130,7 @@ ops/                   → Docker Compose, env.example
 1. `/` — Landing page
 2. `/login` — Login
 3. `/register` — Registration
-4. `/onboarding` — Multi-step KYC onboarding wizard
+4. `/onboarding` — Multi-step KYC onboarding wizard (branching)
 5. `/dashboard` — Balance overview, recent transactions, spending chart
 6. `/accounts` — Account list with multi-currency pockets
 7. `/accounts/:id` — Account detail + transaction history
@@ -114,17 +143,43 @@ ops/                   → Docker Compose, env.example
 
 ## Vite Proxy
 
-Frontend proxies `/api/*` to `http://localhost:8080` in development.
+Frontend proxies `/api/*` to `http://localhost:8080` in development. Both PORT and BASE_PATH default safely so `vite build` works without environment variables set.
+
+## Tests
+
+API-level tests live in `artifacts/api-server/src/__tests__/`:
+
+- **Auth required** — 401 on all protected onboarding endpoints without a token (4 tests)
+- **Ownership isolation** — 403 when a second user accesses another user's session (3 tests)
+- **Branching engine — US country branch** — 4 cases including GB/DE linear fallback
+- **Branching engine — self-employed branch** — 5 cases
+- **Branching engine — sole trader** — 4 cases including skipping `company_docs`
+- **Terminal steps** — 3 edge cases (`review`, unknown stepId)
+
+Total: **23 tests**, all passing via `vitest`.
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push/PR to `main`:
+1. Install dependencies (pnpm, lockfile-frozen)
+2. `pnpm run typecheck`
+3. `pnpm run build`
+4. `pnpm --filter @workspace/api-server run test`
 
 ## Research & Architecture Docs
 
 - `research/competitor_scope.md` — Revolut competitive feature analysis
 - `research/external_api_integrations.md` — KYC, payments, notification API catalog
-- `research/onboarding_matrix.md` — Onboarding flow by market
+- `research/onboarding_matrix.md` / `.csv` — Onboarding flow by market (24 question rows)
+- `research/countries_languages_docs_matrix.csv` — 30-country ID doc requirements
 - `research/web_app_feature_matrix.csv` — Feature matrix by tier/country
 - `architecture/system-context.md` — C4 system context diagram
 - `architecture/microservices-catalog.md` — Service boundaries and contracts
 - `architecture/risks-and-assumptions.md` — Risk register
 - `product/integrations-stubs/` — KYC, payments rail, notifications stubs
 - `ops/docker-compose.yml` — Docker Compose for local dev
+- `ops/Dockerfile.api` — Multi-stage Docker build for API server
+- `ops/Dockerfile.web` — Multi-stage Docker build for Vite frontend
+- `ops/Caddyfile` — Reverse proxy config for production
+- `ops/seed/01_seed.sql` — Demo data seed (user, accounts, transactions, cards)
 - `ops/env.example` — Environment variable template

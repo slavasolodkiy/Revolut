@@ -1,0 +1,31 @@
+country_code,country_name,languages_supported,primary_language,kyc_id_doc_types,address_proof_types,tax_id_required,tax_id_name,supplementary_docs,onboarding_available,business_available,special_requirements,source_id,confidence
+GB,United Kingdom,en,en,passport|national_id|drivers_license,utility_bill|bank_statement|council_tax,no,,none,yes,yes,,SRC-01,high
+DE,Germany,de|en,de,passport|national_id,utility_bill|bank_statement,yes,Steuerliche Identifikationsnummer (11-digit),none,yes,yes,,SRC-01,high
+FR,France,fr|en,fr,passport|national_id|drivers_license,utility_bill|bank_statement,yes,Numéro fiscal (13-digit),none,yes,yes,,SRC-01,high
+ES,Spain,es|ca|en,es,passport|national_id|nie,utility_bill|bank_statement,yes,NIF/NIE,none,yes,yes,,SRC-01,high
+IT,Italy,it|en,it,passport|national_id|drivers_license,utility_bill|bank_statement,yes,Codice Fiscale (16-char),none,yes,yes,,SRC-01,high
+PL,Poland,pl|en,pl,passport|national_id,utility_bill|bank_statement,yes,PESEL (11-digit),none,yes,yes,,SRC-01,high
+NL,Netherlands,nl|en,nl,passport|national_id|drivers_license,utility_bill|bank_statement,yes,BSN (8-9 digits),none,yes,yes,,SRC-01,high
+BE,Belgium,fr|nl|de|en,fr,passport|national_id,utility_bill|bank_statement,yes,Rijksregisternummer,none,yes,yes,,SRC-01,high
+AT,Austria,de|en,de,passport|national_id|drivers_license,utility_bill|bank_statement,yes,Steuernummer,none,yes,yes,,SRC-01,high
+SE,Sweden,sv|en,sv,passport|national_id|drivers_license,utility_bill|bank_statement,yes,Personnummer (12-digit),bank_statement_extra,yes,yes,,SRC-01,high
+NO,Norway,no|en,no,passport|national_id|drivers_license,utility_bill|bank_statement,yes,Fødselsnummer (11-digit),none,yes,yes,EEA non-EU,SRC-01,medium
+DK,Denmark,da|en,da,passport|national_id|drivers_license,utility_bill|bank_statement,yes,CPR-nummer (10-digit),none,yes,yes,,SRC-01,medium
+CH,Switzerland,de|fr|it|en,de,passport|national_id|drivers_license,utility_bill|bank_statement,yes,AHV-Nummer (13-digit),none,yes,yes,Non-EEA; own regulations,SRC-01,medium
+US,United States,en,en,passport|drivers_license|state_id,utility_bill|bank_statement,yes,SSN (9-digit)|EIN (business),ssn_verification,yes,yes,FATCA; SSN required for US residents,SRC-02,high
+CA,Canada,en|fr,en,passport|drivers_license|provincial_id,utility_bill|bank_statement,yes,SIN (9-digit),none,yes,yes,,SRC-02,medium
+AU,Australia,en,en,passport|drivers_license|medicare_card,utility_bill|bank_statement,yes,TFN (8-9 digits),none,yes,yes,,SRC-02,medium
+JP,Japan,ja|en,ja,passport|my_number_card|residence_card,utility_bill,yes,My Number (12-digit),residence_card,yes,yes,Additional AML requirements,SRC-03,medium
+SG,Singapore,en|zh|ms|ta,en,passport|nric|fin,utility_bill|bank_statement,yes,NRIC/FIN,none,yes,yes,,SRC-03,medium
+HK,Hong Kong,zh|en,zh,passport|hkid,utility_bill|bank_statement,yes,HKID,none,yes,yes,,SRC-03,medium
+IN,India,en|hi,en,passport|aadhaar|voter_id|drivers_license,utility_bill|bank_statement,yes,PAN (10-char),aadhaar_or_pan,partial,partial,Regulatory restrictions,SRC-03,low
+BR,Brazil,pt,pt,passport|rg|cnh,utility_bill|bank_statement,yes,CPF (11-digit),none,partial,partial,Regulatory restrictions,SRC-04,low
+MX,Mexico,es,es,passport|ine|curp,utility_bill|bank_statement,yes,RFC (13-char)|CURP (18-char),none,partial,partial,,SRC-04,low
+AE,United Arab Emirates,ar|en,ar,passport|emirates_id,utility_bill|bank_statement,yes,TIN,none,partial,partial,Enhanced KYC,SRC-03,low
+ZA,South Africa,en|af|zu|xh,en,passport|id_book|drivers_license,utility_bill|bank_statement,yes,SARS TIN (10-digit),none,partial,no,,SRC-04,low
+RO,Romania,ro|en,ro,passport|national_id,utility_bill|bank_statement,yes,CNP (13-digit),none,yes,yes,EU member,SRC-01,medium
+CZ,Czech Republic,cs|en,cs,passport|national_id,utility_bill|bank_statement,yes,Rodné číslo,none,yes,yes,EU member,SRC-01,medium
+HU,Hungary,hu|en,hu,passport|national_id|drivers_license,utility_bill|bank_statement,yes,Adóazonosító jel (10-digit),none,yes,yes,EU member,SRC-01,medium
+PT,Portugal,pt|en,pt,passport|cartão_cidadão|drivers_license,utility_bill|bank_statement,yes,NIF (9-digit),none,yes,yes,EU member,SRC-01,high
+GR,Greece,el|en,el,passport|tautotita|drivers_license,utility_bill|bank_statement,yes,AFM (9-digit),none,yes,yes,EU member,SRC-01,medium
+FI,Finland,fi|sv|en,fi,passport|national_id|drivers_license,utility_bill|bank_statement,yes,Henkilötunnus (11-char),none,yes,yes,EU member,SRC-01,medium

@@ -1,0 +1,74 @@
+You are working on an existing repo. Do NOT rebuild from scratch.
+Repository: slavasolodkiy/Revolut
+Goal: Sprint 2 = make the project runnable, secure onboarding, and align docs/contracts.
+
+Hard requirements:
+1) Keep clean-room/legal constraints.
+2) Make incremental commits by logical step.
+3) At the end, push to GitHub and update STATUS.md with real state only.
+
+Tasks:
+
+A) Build & workspace reliability (must pass)
+- Fix TypeScript export collision in lib/api-zod/src/index.ts (duplicate symbols from generated/api and generated/types).
+- Ensure commands pass:
+  - pnpm run typecheck
+  - pnpm run build
+- Keep generated code strategy explicit (document what is generated vs hand-written).
+
+B) Onboarding security + ownership + branching correctness
+- Protect onboarding endpoints with auth middleware:
+  - POST /api/onboarding/start
+  - GET /api/onboarding/session/:sessionId
+  - POST /api/onboarding/session/:sessionId/step
+- Persist userId on onboarding session creation and enforce ownership checks.
+  - A user must never read/advance another user’s session.
+- Implement real branching engine (not linear-only progression):
+  - personal: country=US -> us_ssn
+  - personal: employment=self_employed -> business_income
+  - business: business_type=sole_trader skips company_docs path
+- Add missing step definitions that are referenced by branching.
+- Update users.onboardingStatus when onboarding completes.
+
+C) API contract + docs consistency
+- Reconcile replit.md route table with actual implemented routes.
+- Reconcile STATUS.md claims with real repository state.
+- If demo credentials are documented, provide deterministic seed implementation; otherwise remove fake credentials.
+- Add missing research deliverable:
+  - research/countries_languages_docs_matrix.csv
+- Convert onboarding decomposition to machine-readable CSV as well:
+  - research/onboarding_matrix.csv
+  Columns required:
+  question_id,screen_name,question_text,answer_type,options,validation_rules,branch_if,next_step,required_docs,country_constraints,error_states,source_id,confidence
+
+D) Ops completeness
+- Make docker-compose actually runnable:
+  - add missing ops/Dockerfile.api and ops/Dockerfile.web OR adjust compose to valid existing setup
+  - add missing seed assets if compose mounts ./seed
+- Validate local startup flow in docs.
+
+E) Quality gates
+- Add automated tests (at least API-level) for:
+  - onboarding auth required
+  - onboarding ownership isolation
+  - branching transitions (US branch, self-employed branch, sole trader business branch)
+- Add root GitHub Actions CI workflow to run:
+  - pnpm install
+  - pnpm run typecheck
+  - pnpm run build
+  - tests
+
+Acceptance criteria (must all be true):
+1) pnpm run typecheck = PASS
+2) pnpm run build = PASS
+3) CI workflow exists and is green on pushed commit
+4) onboarding endpoints return 401 without token
+5) cross-user onboarding access returns 403/404 (no data leak)
+6) branching tests pass and prove non-linear flow
+7) docs/STATUS match real repo content (no “done” claims without code/files)
+
+Final response format:
+1) “Changed files” list
+2) “What was fixed” mapped to tasks A-E
+3) Exact command outputs summary (typecheck/build/tests)
+4) Remaining gaps (if any) with explicit TODOs
