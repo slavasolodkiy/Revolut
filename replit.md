@@ -17,7 +17,7 @@ Full-stack fintech reference platform built as a Revolut clean-room study. Inclu
 - **Frontend**: React + Vite (port 21975), Tailwind CSS, shadcn/ui, Radix UI, Recharts
 - **Auth**: SHA-256 bearer token sessions stored in PostgreSQL
 - **Testing**: Vitest + Supertest (API integration + unit tests)
-- **CI**: GitHub Actions (`.github/workflows/ci.yml`)
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — matrix: ubuntu-latest + windows-latest
 - **Build**: esbuild (CJS bundle for API)
 
 ## Project Structure
@@ -41,6 +41,7 @@ ops/                   → Docker Compose, Dockerfiles, Caddy config, seed SQL, 
 
 ## Key Commands
 
+- `pnpm run verify` — check `.github/workflows/ci.yml` exists and docs are consistent
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages (mockup-sandbox skipped)
 - `pnpm --filter @workspace/api-server run test` — run API unit + integration tests
@@ -167,31 +168,35 @@ Integrity guards enforce exact error codes:
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every push/PR to `main` in a matrix across two platforms:
+File: `.github/workflows/ci.yml` — present at repo root.
 
-| Matrix leg | Runner |
+Triggers on push + pull_request to `main`. Matrix (`fail-fast: false`):
+
+| Leg | Runner |
 |---|---|
 | build-and-test (ubuntu-latest) | Linux x64 |
 | build-and-test (windows-latest) | Windows x64 |
 
-Each leg:
+Steps in each leg:
 1. `pnpm install --frozen-lockfile`
-2. `pnpm run typecheck`
-3. `pnpm run build`
-4. `pnpm --filter @workspace/api-server run test`
+2. `node scripts/verify-ci-presence.mjs` — anti-regression guard
+3. `pnpm run typecheck`
+4. `pnpm run build`
+5. `pnpm --filter @workspace/api-server run test`
+
+The `scripts/verify-ci-presence.mjs` script exits non-zero if the CI file is missing or the YAML no longer contains the ubuntu+windows matrix — catching accidental deletion early.
 
 ## Platform Support
 
-Verified CI targets:
-- **Linux x64** (`ubuntu-latest`) — primary Replit deployment target; all native binaries included in lockfile
-- **Windows x64** (`windows-latest`) — CI matrix; `@esbuild/win32-x64`, `@rollup/rollup-win32-x64-gnu`, `lightningcss-win32-x64-msvc`, `@tailwindcss/oxide-win32-x64-msvc` are included in the lockfile and will be downloaded by Windows runners
+| Platform | Status | Notes |
+|---|---|---|
+| Linux x64 (`ubuntu-latest`) | CI-verified | Primary Replit deployment target |
+| Windows x64 (`windows-latest`) | CI-verified | win32-x64 native binaries in lockfile |
+| macOS (darwin) | Not supported | Binaries excluded from lockfile; use Docker |
+| Windows ARM64 / ia32 | Not supported | Excluded from lockfile |
+| Linux non-x64 (arm64, arm, …) | Not supported | Excluded from lockfile |
 
-Not supported / not CI-verified:
-- **macOS** (darwin-arm64, darwin-x64) — binaries excluded from lockfile to reduce size; use Docker or devcontainer
-- **Windows ARM64 / ia32** — excluded from lockfile
-- **Linux non-x64** (arm64, arm, etc.) — excluded from lockfile
-
-The `dev` script in `@workspace/api-server` uses `cross-env` for cross-platform `NODE_ENV` assignment (required on Windows cmd.exe).
+The `dev` script uses `cross-env` for cross-platform `NODE_ENV` assignment (required on Windows).
 
 ## Research & Architecture Docs
 
