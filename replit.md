@@ -2,7 +2,11 @@
 
 ## Overview
 
-Full-stack fintech reference platform built as a Revolut clean-room study. Includes research docs, architecture docs, a React+Vite frontend, Express backend, PostgreSQL database with 9 tables, OpenAPI spec, auto-generated hooks/schemas, ops setup, automated tests, and GitHub Actions CI.
+Full-stack fintech reference platform built as a Revolut clean-room study. Includes research docs, architecture docs, a React+Vite frontend, Express backend, PostgreSQL database with 9 tables, OpenAPI spec, auto-generated hooks/schemas, and ops setup.
+
+> **No GitHub Actions CI.** Replit→GitHub sync does not include the `workflow` permission
+> scope required to push `.github/workflows/` files. CI is intentionally absent.
+> See `docs/engineering/no-ci-policy.md` for rationale and local verification commands.
 
 ## Stack
 
@@ -17,7 +21,6 @@ Full-stack fintech reference platform built as a Revolut clean-room study. Inclu
 - **Frontend**: React + Vite (port 21975), Tailwind CSS, shadcn/ui, Radix UI, Recharts
 - **Auth**: SHA-256 bearer token sessions stored in PostgreSQL
 - **Testing**: Vitest + Supertest (API integration + unit tests)
-- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — matrix: ubuntu-latest + windows-latest
 - **Build**: esbuild (CJS bundle for API)
 
 ## Project Structure
@@ -36,12 +39,13 @@ research/              → Competitor analysis, feature matrix, API catalog, CSV
 architecture/          → System context, microservices catalog, risks
 product/integrations-stubs/  → KYC, payments rail, notifications stubs
 ops/                   → Docker Compose, Dockerfiles, Caddy config, seed SQL, env.example
-.github/workflows/     → GitHub Actions CI pipeline
+docs/engineering/      → Engineering decisions (no-ci-policy.md, …)
+scripts/               → Cross-platform workspace scripts
 ```
 
 ## Key Commands
 
-- `pnpm run verify` — check `.github/workflows/ci.yml` exists and docs are consistent
+- `pnpm run verify` — check docs are consistent with repo state (no false CI claims)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages (mockup-sandbox skipped)
 - `pnpm --filter @workspace/api-server run test` — run API unit + integration tests
@@ -153,50 +157,28 @@ API-level tests live in `artifacts/api-server/src/__tests__/`:
 
 - **Auth required** — 401 on all protected onboarding endpoints without a token (4 tests)
 - **Ownership isolation** — 403 when a second user accesses another user's session (3 tests)
-- **Branching engine — US country branch** — 4 cases including GB/DE linear fallback
-- **Branching engine — self-employed branch** — 5 cases
-- **Branching engine — sole trader** — 4 cases including skipping `company_docs`
-- **Terminal steps** — 3 edge cases (`review`, unknown stepId)
+- **Integrity — INVALID_STEP_ID** — non-existent stepId → exact 400 (2 tests)
+- **Integrity — STEP_OUT_OF_ORDER** — wrong-but-valid stepId → exact 409, including "review jump" (2 tests)
+- **Integrity — STEP_OUT_OF_ORDER** — re-submit after session advances → exact 409 (1 test)
+- **Integrity — SESSION_COMPLETED** — completed session → exact 409 (2 tests)
+- **Branching — US country branch** — 4 cases
+- **Branching — self-employed branch** — 5 cases
+- **Branching — sole trader** — 4 cases (skips `company_docs`)
+- **Terminal steps** — 3 edge cases
 
-Total: **30 tests**, all passing via `vitest`.
-
-Integrity guards enforce exact error codes:
-- `INVALID_STEP_ID` (400): stepId not in step catalogue
-- `STEP_OUT_OF_ORDER` (409): valid stepId but ≠ `session.currentStepId`; "review jump" asserts exact 409
-- `SESSION_COMPLETED` (409): no further steps accepted after session completes
-- Re-submit: submitting a stale (already-accepted) step after session advances returns 409
-
-## CI
-
-File: `.github/workflows/ci.yml` — present at repo root.
-
-Triggers on push + pull_request to `main`. Matrix (`fail-fast: false`):
-
-| Leg | Runner |
-|---|---|
-| build-and-test (ubuntu-latest) | Linux x64 |
-| build-and-test (windows-latest) | Windows x64 |
-
-Steps in each leg:
-1. `pnpm install --frozen-lockfile`
-2. `node scripts/verify-ci-presence.mjs` — anti-regression guard
-3. `pnpm run typecheck`
-4. `pnpm run build`
-5. `pnpm --filter @workspace/api-server run test`
-
-The `scripts/verify-ci-presence.mjs` script exits non-zero if the CI file is missing or the YAML no longer contains the ubuntu+windows matrix — catching accidental deletion early.
+Total: **30 tests**, all passing.
 
 ## Platform Support
 
-| Platform | Status | Notes |
+| Platform | Build+Test | Notes |
 |---|---|---|
-| Linux x64 (`ubuntu-latest`) | CI-verified | Primary Replit deployment target |
-| Windows x64 (`windows-latest`) | CI-verified | win32-x64 native binaries in lockfile |
-| macOS (darwin) | Not supported | Binaries excluded from lockfile; use Docker |
+| Linux x64 (Replit) | Verified locally | Primary deployment target |
+| Windows x64 | Lockfile ready | win32-x64 binaries in lockfile; not run in CI (no CI) |
+| macOS (darwin) | Not supported | Binaries excluded from lockfile |
 | Windows ARM64 / ia32 | Not supported | Excluded from lockfile |
-| Linux non-x64 (arm64, arm, …) | Not supported | Excluded from lockfile |
+| Linux non-x64 | Not supported | Excluded from lockfile |
 
-The `dev` script uses `cross-env` for cross-platform `NODE_ENV` assignment (required on Windows).
+The `dev` script uses `cross-env` for cross-platform `NODE_ENV` assignment.
 
 ## Research & Architecture Docs
 
@@ -215,3 +197,4 @@ The `dev` script uses `cross-env` for cross-platform `NODE_ENV` assignment (requ
 - `ops/Caddyfile` — Reverse proxy config for production
 - `ops/seed/01_seed.sql` — Demo data seed (user, accounts, transactions, cards)
 - `ops/env.example` — Environment variable template
+- `docs/engineering/no-ci-policy.md` — Rationale for no GitHub Actions workflow
